@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+  <persistence-unit name="projectCDPU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>it.unina.db2019.project.Interfaccia</class>
+    <class>it.unina.db2019.project.Parametro</class>
+    <class>it.unina.db2019.project.Classe</class>
+    <class>it.unina.db2019.project.Partecipazione</class>
+    <class>it.unina.db2019.project.Attributo</class>
+    <class>it.unina.db2019.project.ViewPartecipazione</class>
+    <class>it.unina.db2019.project.ViewClasse</class>
+    <class>it.unina.db2019.project.Metodo</class>
+    <class>it.unina.db2019.project.Classdiagram</class>
+    <class>it.unina.db2019.project.ViewAssociazione</class>
+    <class>it.unina.db2019.project.Associazione</class>
+    <class>it.unina.db2019.project.ViewFoo</class>
+    <class>it.unina.db2019.project.Tipo</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin:@localhost:1521:XE"/>
+      <property name="javax.persistence.jdbc.user" value="C##SYSKEN"/>
+      <property name="javax.persistence.jdbc.driver" value="oracle.jdbc.OracleDriver"/>
+      <property name="javax.persistence.jdbc.password" value="051215"/>
+    </properties>
+  </persistence-unit>
+</persistence>
