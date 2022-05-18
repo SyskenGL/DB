@@ -1,0 +1,16 @@
+drop table  CLASSDIAGRAM       cascade constraints;
+drop table  CLASSE             cascade constraints;
+drop table  TIPO               cascade constraints;
+drop table  DIPENDENZA         cascade constraints;
+drop table  ATTRIBUTO          cascade constraints;
+drop table  METODO             cascade constraints;
+drop table  PARAMETRO          cascade constraints;
+drop table  COMPOSIZIONE       cascade constraints;
+drop table  REALIZZAZIONE      cascade constraints;
+drop table  LITERAL            cascade constraints;
+drop table  ASSOCIAZIONE       cascade constraints;
+drop table  PARTECIPAZIONE     cascade constraints;
+drop table  QUALIFICAZIONE     cascade constraints;
+drop table  SPECIAL_INTERF     cascade constraints;
+drop table  INTERFACCIA        cascade constraints;
+

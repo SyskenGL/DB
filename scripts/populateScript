@@ -1,0 +1,187 @@
+
+ -- CLASSDIAGRAM
+ INSERT INTO CLASSDIAGRAM VALUES (NULL, 'ProgettoDB', 'N86/2799 - N86/2351', NULL, 'DB relazionale per la descrizione e la memorizzazione di Class Diagram UML 
+                                                                                    con supporto a tutte le relative caratteristiche.');
+ COMMIT;
+ 
+ -- CLASSI (SEMPLICI)
+ INSERT INTO CLASSE VALUES (NULL, 'ClassDiagram', 'Descrittore di un Class Diagram UML.',                                       NULL, 1, NULL, NULL);
+ INSERT INTO CLASSE VALUES (NULL, 'Parametro',    'Descrittore di un parametro di un metodo oppure di una classe parametrica.', NULL, 1, NULL, NULL);
+ INSERT INTO CLASSE VALUES (NULL, 'Metodo',       'Descrittore di un metodo di appartenente ad una classe.',                    NULL, 1, NULL, NULL);
+ INSERT INTO CLASSE VALUES (NULL, 'Attributo',    'Descrittore di un attributo appartenente ad una classe.',                    NULL, 1, NULL, NULL);
+ INSERT INTO CLASSE VALUES (NULL, 'Interfaccia',  'Descrittore di un''interfaccia appartenente ad un Class Diagram.',           NULL, 1, NULL, NULL);
+ INSERT INTO CLASSE VALUES (NULL, 'Associazione', 'Descrittore di un''associazione appartenente ad un Class Diagram.', 			NULL, 1, NULL, NULL);
+ COMMIT;
+ INSERT INTO CLASSE VALUES (NULL, 'Aggregazione', 'Descrittore del tipo di un''associazione.',                         			NULL, 1, NULL, 6);
+ INSERT INTO CLASSE VALUES (NULL, 'Composizione', 'Descrittore del tipo di un''associazione.',                         			NULL, 1, NULL, 6);
+ INSERT INTO CLASSE VALUES (NULL, 'Classe',       'Descrittore di una classe appartenente ad un Class Diagram.',      		    NULL, 1, NULL, NULL);
+ COMMIT;
+ INSERT INTO CLASSE VALUES (NULL, 'ClassAssoc',   'Descrittore del tipo di una classe.',                                 		NULL, 1, NULL, 9);
+ INSERT INTO CLASSE VALUES (NULL, 'Parametrica',  'Descrittore del tipo di una classe.', 							   			NULL, 1, NULL, 9);
+ INSERT INTO CLASSE VALUES (NULL, 'Astratta',     'Descrittore del tipo di una classe.', 								   		NULL, 1, NULL, 9);
+ INSERT INTO CLASSE VALUES (NULL, 'Tipo',         'Descrittore di un tipo.', 													NULL, 1, NULL, NULL);
+ COMMIT;
+ INSERT INTO CLASSE VALUES (NULL, 'Strutturato',  'Descrittore del "tipo" di un tipo.', 										NULL, 1, NULL, 13);
+ INSERT INTO CLASSE VALUES (NULL, 'Primitivo',    'Descrittore del "tipo" di un tipo.', 										NULL, 1, NULL, 13);
+ INSERT INTO CLASSE VALUES (NULL, 'Enumerazione', 'Descrittore del "tipo" di un tipo.', 										NULL, 1, NULL, 13);
+ INSERT INTO CLASSE VALUES (NULL, 'TParametrico', 'Descrittore del "tipo" di un tipo.', 										NULL, 1, NULL, 13);
+ INSERT INTO CLASSE VALUES (NULL, 'TClasse',      'Descrittore del "tipo" di un tipo.', 										NULL, 1, NULL, 13);
+ 
+ -- ASSOCIAZIONI	
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Specializzazione',      'Esprime una relazione gerarchica che intercorre tra due classi.',    
+									   'semplice', 1, NULL, '0', '1', 'semplice', 1, 0, 9,  NULL, '0', 'N', 'semplice', 1, 0, 9);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Dipendenza',            'Esprime una relazione di dipendenza che intercorre tra due classi.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 9,  NULL, '0', 'N', 'semplice', 1, 0, 9);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Partecipazione',        'Esprime la partecipazione di una classe ad un’associazione.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 9,  NULL, '0', 'N', 'semplice', 1, 0, 6);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Composizione',          'Esprime la composizione di un tipo strutturato.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 13, NULL, '0', 'N', 'semplice', 1, 0, 13);
+ 
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'SpecialInterf',         'Esprime una relazione gerarchica che intercorre tra due interfacce. ', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 5,  NULL, '0', 'N', 'semplice', 1, 0, 5);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Restituisce',           'Esprime la possibilità di un metodo di restituire un tipo.', 
+                                       'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 13, NULL, '0', '1', 'semplice', 1, 0, 3);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Possiede',              'Esprime l’appartenenza di una certa classe di associazione ad un’associazione.', 
+                                       'semplice', 1, NULL, '0', '1', 'semplice', 1, 0, 6,  NULL, '1', '1', 'semplice', 1, 0, 9);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Realizzazione',         'Esprime l’implementazione di un’interfaccia da parte di una classe.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 5,  NULL, '0', 'N', 'semplice', 1, 0, 9);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Scope',                 'Esprime l’ambiente in cui può essere utilizzato un certo tipo parametrico.', 
+									   'semplice', 1, NULL, '1', '1', 'semplice', 1, 0, 17, NULL, '0', '1', 'semplice', 1, 0, 9);
+									   
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Contiene Classe',       'Esprime l’appartenenza di una classe ad un Class Diagram.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 1,  NULL, '1', '1', 'semplice', 1, 0, 9);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Contiene Associazione', 'Esprime l’appartenenza di un’associazione ad un Class Diagram.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 1,  NULL, '1', '1', 'semplice', 1, 0, 6);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Contiene Interfaccia',  'Esprime l’appartenenza di un’interfaccia ad un Class Diagram.', 
+								       'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 1,  NULL, '1', '1', 'semplice', 1, 0, 5);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Contiene Tipo',         'Esprime l’appartenenza di un tipo ad un Class Diagram.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 1,  NULL, '0', '1', 'semplice', 1, 0, 13);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Ha',                    'Esprime l’appartenenza di un attributo ad una classe.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 9,  NULL, '1', '1', 'semplice', 1, 0, 4);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Classe dispone',        'Esprime l’appartenenza di un metodo ad una classe.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 9,  NULL, '0', '1', 'semplice', 1, 0, 3);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Interfaccia dispone',   'Esprime l’appartenenza di un metodo ad un’interfaccia.', 
+									   'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 5,  NULL, '0', '1', 'semplice', 1, 0, 3);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Riferisce Classe',      'Esprime da quale classe è stato definito un certo tipo classe', 
+									   'semplice', 1, NULL, '1', '1', 'semplice', 1, 0, 9,  NULL, '1', '1', 'semplice', 1, 0, 18);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Riferisce Parametro',   'Esprime da quale parametro (di una classe Parametrica) è stato definito un tipo Parametrico.', 
+									   'semplice', 1, NULL, '1', '1', 'semplice', 1, 0, 17, NULL, '0', '1', 'semplice', 1, 0, 13);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Parametro è',           'Esprime il tipo di un parametro.', 
+							           'semplice', 1, NULL, '0', '1', 'semplice', 1, 0, 2,  NULL, '0', 'N', 'semplice', 1, 0, 13);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Template',              'Esprime l’appartenenza di un parametro ad una classe Parametrica.', 
+								       'semplice', 1, NULL, '0', '1', 'semplice', 1, 0, 2,  NULL, '0', 'N', 'semplice', 1, 0, 11);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Segnatura',             'Esprime l’appartenenza di un parametro ad un metodo.', 
+									   'semplice', 1, NULL, '0', '1', 'semplice', 1, 0, 2,  NULL, '0', 'N', 'semplice', 1, 0, 3);
+									  
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Attributo è',           'Esprime il tipo di un attributo.', 
+							           'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 13, NULL, '1', '1', 'semplice', 1, 0, 4);
+ COMMIT;
+ 
+ -- CLASSI DI ASSOCIAZIONE								  
+ INSERT INTO CLASSE VALUES (NULL, 'Partecipazione', 'Descrittore di una partecipazione ad un’associazione.',  'associazione', 1, 3, NULL);          
+ INSERT INTO CLASSE VALUES (NULL, 'Dipendenza', 'Descrittore di una dipendenza tra due classi.',              'associazione', 1, 2, NULL); 
+ 
+ -- ASSOCIAZIONE (PARTECIPAZIONE - ATTRIBUTO)
+ INSERT INTO VIEW_ASSOCIAZIONE VALUES (NULL, 'Qualificazione',        'Esprime la qualifica di un attributo nei confronti di una partecipazione che ammette qualificatore.', 
+							           'semplice', 1, NULL, '0', 'N', 'semplice', 1, 0, 19, NULL, '0', 'N', 'semplice', 1, 0, 4);
+ 
+ -- ENUMERAZIONI
+ INSERT INTO TIPO VALUES (NULL, 'T_SCOPE', 'enumerazione', NULL, 1, NULL, NULL);  
+ INSERT INTO TIPO VALUES (NULL, 'T_PAR',   'enumerazione', NULL, 1, NULL, NULL);                          
+ INSERT INTO TIPO VALUES (NULL, 'T_PRIM',  'enumerazione', NULL, 1, NULL, NULL);  
+ COMMIT; 
+ 
+ -- LITERAL (T_SCOPE)
+ INSERT INTO LITERAL VALUES(NULL, 'public',    25);
+ INSERT INTO LITERAL VALUES(NULL, 'package',   25);
+ INSERT INTO LITERAL VALUES(NULL, 'protected', 25);
+ INSERT INTO LITERAL VALUES(NULL, 'private',   25);
+ 
+ -- LITERAL (T_PAR)
+ INSERT INTO LITERAL VALUES(NULL, 'semplice',     26);
+ INSERT INTO LITERAL VALUES(NULL, 'aggregata',    26);
+ INSERT INTO LITERAL VALUES(NULL, 'aggregante',   26);
+ INSERT INTO LITERAL VALUES(NULL, 'composta',     26);
+ INSERT INTO LITERAL VALUES(NULL, 'componente',   26);
+ 
+ -- LITERAL (T_PRIM)
+ INSERT INTO LITERAL VALUES(NULL, 'boolean',  27);
+ INSERT INTO LITERAL VALUES(NULL, 'integer',  27);
+ INSERT INTO LITERAL VALUES(NULL, 'string',   27);
+ INSERT INTO LITERAL VALUES(NULL, 'real',     27);
+ 
+ -- ATTRIBUTI (CLASSDIAGRAM)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome',        'Nome associato al Class Diagram.',           '1', '1', NULL, 1, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Data',        'Data della creazione del Class Diagram.',    '1', '1', NULL, 1, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Autore',      'Nome dell’autore del Class Diagram.',        '1', '1', NULL, 1, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Descrizione', 'Descrizione facoltativa del Class Diagram.', '0', '1', NULL, 1, 3);
+ 
+ -- ATTRIBUTI (CLASSE)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome',        'Nome associato alla classe.',           '1', '1', NULL, 9, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Descrizione', 'Descrizione facoltativa della classe.', '0', '1', NULL, 9, 3);
+ 
+ -- ATTRIBUTI (ASSOCIAZIONE)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome',        'Descrizione facoltativa dell’associazione.',             '0', '1', NULL, 6, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Grado',       'Indica il numero di classi coinvolte nell’associazione', '1', '1', NULL, 6, 2);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Descrizione', 'Descrizione facoltativa dell’associazione. ',            '0', '1', NULL, 6, 3);
+ 
+ -- ATTRIBUTI (DIPENDENZA)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Dipendenza', 'Indica il tipo di dipendenza.', '1', '1', NULL, 20, 3);
+ 
+ -- ATTRIBUTI (INTERFACCIA)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome',        'Nome associato all'' interfaccia.',           '1', '1', NULL, 5, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Descrizione', 'Descrizione facoltativa dell''intefaccia.',   '0', '1', NULL, 5, 3);
+ 
+ -- ATTRIBUTI (METODO)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome', 'Nome associato al metodo.',                  '1', '1', NULL, 3, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Descrizione', 'Descrizione facoltativa del metodo.', '0', '1', NULL, 3, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Scope', 'Indica lo scope del metodo.',               '1', '1', NULL, 3, 25);
+ 
+ -- ATTRIBUTI (PARAMETRO)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome',      'Nome associato al parametro.',                                       '1', '1', NULL, 2, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Posizione', 'Indica la posizione del parametro all’interno della segnatura 
+                                                  di un metodo oppure nella definizione di una classe "Parametrica".', '0', '1', NULL, 2, 2);
+												  
+ -- ATTRIBUTI (ATTRIBUTO)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome',             'Nome associato all''attributo.',                                 '1', '1', NULL, 4, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Descrizione',      'Descrizione facoltativa dell''attributo.',                       '0', '1', NULL, 4, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'cardinalita inf.', 'Indica l''estremo inferiore della cardinalità dell''attributo.', '1', '1', NULL, 4, 2);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'cardinalita sup.', 'Indica l''estremo superiore della cardinalità dell''attributo.', '1', '1', NULL, 4, 2);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Scope',            'Indica lo scope dell''attributo.',                               '1', '1', NULL, 4, 25);
+ 
+ -- ATTRIBUTI (TIPO)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Nome', 'Nome associato al tipo.',         '1', '1', NULL, 13, 3);
+
+ -- ATTRIBUTI (ENUMERAZIONE)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Literal', 'Indica un certo "valore" fisso.', '1', 'N', NULL, 16, 3);
+ 
+ -- ATTRIBUTI (PARTECIPAZIONE)
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Ruolo',             'Indentifica il ruolo con cui la classe coinvolta partecipa.',                                   '0', '1', NULL, 19, 3);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'cardinalita inf.',  'Indica l''estremo inferiore della cardinalità della partecipazione.',                           '1', '1', NULL, 19, 2);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'cardinalita sup.',  'Indica l''estremo superiore della cardinalità della partecipazione.',                           '1', '1', NULL, 19, 2);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Tipo',              'Indica la posizione intrapresa dalla classe nell''associazione (Aggregata, Componente, etc.).', '1', '1', NULL, 19, 26); 
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Navigabilita',      'Indica se l''associazione e navigabile verso la partecipazione.',                               '1', '1', NULL, 19, 1);
+ INSERT INTO ATTRIBUTO VALUES(NULL, 'Qualificatore',     'Indica se la partecipazione possiede o meno un qualificatore. ',                                '1', '1', NULL, 19, 1);									  
+ COMMIT;								  
+									  
+									  
+									  
+									  

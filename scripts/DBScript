@@ -1,0 +1,1786 @@
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: CLASSDIAGRAM 
+ CREATE TABLE CLASSDIAGRAM(
+	ID_ClassDiagram     INTEGER,
+	Nome                VARCHAR2(50)    NOT NULL,
+	Autore              VARCHAR2(50)    DEFAULT ON NULL 'Guest', 
+	C_Data              VARCHAR2(50)    DEFAULT ON NULL TO_CHAR(SYSDATE, 'DD-MM-YYYY'),
+	Descrizione         VARCHAR2(300)   DEFAULT ON NULL 'no description'
+ );   
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_CLASSDIAGRAM
+	BEFORE INSERT ON CLASSDIAGRAM
+	FOR EACH ROW
+	DECLARE
+		var_ID_ClassDiagram CLASSDIAGRAM.ID_ClassDiagram%TYPE;
+	BEGIN
+		IF (:NEW.ID_ClassDiagram IS NULL) THEN
+			SELECT NVL(MAX(C.ID_ClassDiagram), 0) + 1 INTO var_ID_ClassDiagram
+			FROM CLASSDIAGRAM C; 
+			:NEW.ID_ClassDiagram := var_ID_ClassDiagram;
+		END IF;	
+	END;   
+    /
+
+
+
+ -- CONSTRAINTS: CLASSDIAGRAM 
+ ALTER TABLE CLASSDIAGRAM
+	ADD(
+		-- Chiave primaria
+		CONSTRAINT PK_CLASSDIAGRAM PRIMARY KEY (ID_ClassDiagram),
+		-- Vincolo UNIQUE_CD_NAME
+		CONSTRAINT UNIQUE_CD_NAME UNIQUE (Nome)
+	);
+	
+	
+	
+ /*____________________________________________________________________________________*/
+	
+	
+	
+ -- TABLE: ASSOCIAZIONE
+ CREATE TABLE ASSOCIAZIONE(
+	ID_Associazione     INTEGER,
+	Nome                VARCHAR2(50),
+	Descrizione         VARCHAR2(300)   DEFAULT ON NULL 'no description',
+	Tipo                VARCHAR2(50)    NOT NULL,
+	FK_ClassDiagram     INTEGER         NOT NULL
+ );  	
+	
+	
+	
+ -- GESTIONE PRIMARY KEY [NULL]	
+ CREATE OR REPLACE TRIGGER SET_ID_ASSOCIAZIONE
+	BEFORE INSERT ON ASSOCIAZIONE
+	FOR EACH ROW
+	DECLARE
+		var_ID_Associazione ASSOCIAZIONE.ID_Associazione%TYPE;
+	BEGIN
+		IF (:NEW.ID_Associazione IS NULL) THEN
+			SELECT NVL(MAX(A.ID_Associazione), 0) + 1 INTO var_ID_Associazione
+			FROM ASSOCIAZIONE A; 
+			:NEW.ID_Associazione := var_ID_Associazione;
+		END IF;	
+	END;   
+    /
+	
+	
+	
+ -- CONSTRAINTS: ASSOCIAZIONE
+ ALTER TABLE ASSOCIAZIONE
+	ADD(
+	    -- Chiave primaria
+		CONSTRAINT PK_ASSOCIAZIONE PRIMARY KEY (ID_Associazione),            
+		-- Chiave esterna
+		CONSTRAINT ASSOC_FK_CLASSDIAGRAM FOREIGN KEY (FK_ClassDiagram)       
+			REFERENCES CLASSDIAGRAM(ID_ClassDiagram) ON DELETE CASCADE,     
+		-- Vincolo T_ASSOC
+		CONSTRAINT T_ASSOC CHECK (Tipo IN ('semplice', 'aggregazione', 'composizione'))
+	); 
+	
+	
+ /*____________________________________________________________________________________*/
+ 
+ 
+ 
+ -- TABLE: CLASSE
+ CREATE TABLE CLASSE(
+	ID_Classe           INTEGER,
+	Nome                VARCHAR2(50)    NOT NULL,
+	Descrizione         VARCHAR2(300)   DEFAULT ON NULL 'no description',
+	Tipo                VARCHAR2(20)    DEFAULT ON NULL 'semplice',
+	FK_ClassDiagram     INTEGER         NOT NULL,
+	FK_Associazione     INTEGER,
+	FK_Generale         INTEGER
+ );    
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_CLASSE
+	BEFORE INSERT ON CLASSE
+	FOR EACH ROW
+	DECLARE
+		var_ID_Classe CLASSE.ID_Classe%TYPE;
+	BEGIN
+		IF (:NEW.ID_Classe IS NULL) THEN
+			SELECT NVL(MAX(C.ID_Classe), 0) + 1 INTO var_ID_Classe
+			FROM CLASSE C; 
+			:NEW.ID_Classe := var_ID_Classe;
+		END IF;	
+	END;   
+    /  
+
+
+
+ -- CONSTRAINTS: CLASSE 
+ ALTER TABLE CLASSE
+	ADD(
+		-- Chiave primaria
+		CONSTRAINT PK_CLASSE PRIMARY KEY (ID_Classe),                        
+		-- Chiave esterna
+		CONSTRAINT CLASSE_FK_CLASSDIAGRAM FOREIGN KEY (FK_ClassDiagram)      
+			REFERENCES CLASSDIAGRAM(ID_ClassDiagram) ON DELETE CASCADE,     
+		-- Chiave esterna	
+		CONSTRAINT CLASSE_FK_ASSOCIAZIONE FOREIGN KEY (FK_Associazione)     
+			REFERENCES ASSOCIAZIONE(ID_Associazione) ON DELETE CASCADE,
+		-- Chiave esterna	
+		CONSTRAINT CLASSE_FK_CLASSE FOREIGN KEY (FK_Generale)                
+			REFERENCES CLASSE(ID_Classe) ON DELETE SET NULL,
+		-- Vincolo T_CLASS
+		CONSTRAINT T_CLASS CHECK (Tipo IN ('semplice', 'associazione', 
+									       'parametrica', 'astratta')),
+		-- Vincolo UNIQUE_CLASS_NAME
+		CONSTRAINT UNIQUE_CLASS_NAME UNIQUE (FK_ClassDiagram, Nome),
+		-- Vincolo NO_SELF_SPECIAL_CLASS
+		CONSTRAINT NO_SELF_SPECIAL_CLASS CHECK (ID_Classe <> FK_Generale),
+		-- Vincolo UNIQUE_ASSOC_CLASS
+		CONSTRAINT UNIQUE_ASSOC_CLASS UNIQUE (FK_Associazione),
+		-- Vincolo IS_VALID_ASSOC_CLASS
+		CONSTRAINT IS_VALID_ASSOC_CLASS CHECK ((FK_Associazione IS NULL AND tipo 
+												<> 'associazione') OR 
+		                                       (FK_Associazione IS NOT NULL 
+											    AND tipo = 'associazione'))
+	);
+	
+	
+	
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: INTERFACCIA
+ CREATE TABLE INTERFACCIA(
+	ID_Interfaccia      INTEGER,
+	Nome                VARCHAR2(50)    NOT NULL,
+	Descrizione         VARCHAR2(300)   DEFAULT ON NULL 'no description',
+	FK_ClassDiagram     INTEGER         NOT NULL
+ ); 
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_INTERFACCIA
+	BEFORE INSERT ON INTERFACCIA
+	FOR EACH ROW
+	DECLARE
+		var_ID_Interfaccia INTERFACCIA.ID_Interfaccia%TYPE;
+	BEGIN
+		IF (:NEW.ID_Interfaccia IS NULL) THEN
+			SELECT NVL(MAX(I.ID_Interfaccia), 0) + 1 INTO var_ID_Interfaccia
+			FROM INTERFACCIA I; 
+			:NEW.ID_Interfaccia := var_ID_Interfaccia;
+		END IF;	
+	END;   
+    /  
+
+
+
+ -- CONSTRAINTS: INTERFACCIA 
+ ALTER TABLE INTERFACCIA
+	ADD(
+		-- Chiave primaria
+		CONSTRAINT PK_INTERFACCIA PRIMARY KEY (ID_Interfaccia),              
+		 -- Chiave esterna
+		CONSTRAINT INTERF_FK_CLASSDIAGRAM FOREIGN KEY (FK_ClassDiagram)     
+			REFERENCES CLASSDIAGRAM(ID_ClassDiagram) ON DELETE CASCADE,
+		-- Vincolo UNIQUE_INTERF_NAME
+		CONSTRAINT UNIQUE_INTERF_NAME UNIQUE (Nome, FK_ClassDiagram)
+	);
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: DIPENDENZA
+ CREATE TABLE DIPENDENZA(
+	ID_Dipendenza       INTEGER,
+	Dipendenza          VARCHAR2(50)    NOT NULL,
+	FK_Superiore        INTEGER         NOT NULL,
+	FK_Dipendente       INTEGER         NOT NULL
+ ); 
+ 
+ 
+ 
+    -- GESTIONE PRIMARY KEY [NULL] 
+  CREATE OR REPLACE TRIGGER SET_ID_DIPENDENZA
+	BEFORE INSERT ON DIPENDENZA
+	FOR EACH ROW
+	DECLARE
+		var_ID_Dipendenza DIPENDENZA.ID_Dipendenza%TYPE;
+	BEGIN
+		IF (:NEW.ID_Dipendenza IS NULL) THEN
+			SELECT NVL(MAX(D.ID_Dipendenza), 0) + 1 INTO var_ID_Dipendenza
+			FROM DIPENDENZA D; 
+			:NEW.ID_Dipendenza := var_ID_Dipendenza;
+		END IF;	
+	END;   
+    / 
+	
+	
+ 
+  -- CONSTRAINTS: DIPENDENZA 
+ ALTER TABLE DIPENDENZA
+	ADD(
+		-- Chiave primaria (implementata per facilitare l'implementazione dell'applicativo java)
+		CONSTRAINT PK_DIPENDENZA PRIMARY KEY (ID_Dipendenza),
+		-- Chiave esterna
+		CONSTRAINT DIPEND_FK_SUPERIORE FOREIGN KEY (FK_Superiore) 
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,                 
+		-- Chiave esterna
+		CONSTRAINT DIPEND_FK_DIPENDENTE FOREIGN KEY (FK_Dipendente)         
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,
+		-- Vincolo UNIQUE_DEPENDENCY
+		CONSTRAINT UNIQUE_DEPENDENCY UNIQUE (Dipendenza, FK_Superiore, FK_Dipendente)
+	);
+	
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: SPECIAL_INTERF
+ CREATE TABLE SPECIAL_INTERF(
+	ID_SpecialInterf    INTEGER,
+	FK_Generale         INTEGER         NOT NULL,
+	FK_Specializzata    INTEGER         NOT NULL
+ ); 
+ 
+ 
+ 
+   -- GESTIONE PRIMARY KEY [NULL] 
+  CREATE OR REPLACE TRIGGER SET_ID_SPECIAL_INTERF
+	BEFORE INSERT ON SPECIAL_INTERF
+	FOR EACH ROW
+	DECLARE
+		var_ID_SpecialInterf SPECIAL_INTERF.ID_SpecialInterf%TYPE;
+	BEGIN
+		IF (:NEW.ID_SpecialInterf IS NULL) THEN
+			SELECT NVL(MAX(S.ID_SpecialInterf), 0) + 1 INTO var_ID_SpecialInterf
+			FROM SPECIAL_INTERF S; 
+			:NEW.ID_SpecialInterf := var_ID_SpecialInterf;
+		END IF;	
+	END;   
+    / 
+ 
+ 
+ 
+  -- CONSTRAINTS: SPECIAL_INTERF 
+ ALTER TABLE SPECIAL_INTERF
+	ADD(
+		-- Chiave primaria (implementata per facilitare l'implementazione dell'applicativo java)
+		CONSTRAINT PK_SPECIALINTERF PRIMARY KEY (ID_SpecialInterf),
+		-- Chiave esterna
+		CONSTRAINT INTERF_FK_GENERALE FOREIGN KEY (FK_Generale)             
+			REFERENCES INTERFACCIA(ID_Interfaccia) ON DELETE CASCADE,      
+		-- Chiave esterna
+		CONSTRAINT INTERF_FK_SPECIALIZZATA FOREIGN KEY (FK_Specializzata)
+			REFERENCES INTERFACCIA(ID_Interfaccia) ON DELETE CASCADE,
+		-- Vincolo UNIQUE_SPECIAL
+		CONSTRAINT UNIQUE_SPECIAL UNIQUE (FK_Generale, FK_Specializzata),
+		-- Vincolo NO_SELF_SPECIAL_INTERF
+		CONSTRAINT NO_SELF_SPECIAL_INTERF CHECK (FK_Generale <> FK_Specializzata)
+	);
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: REALIZZAZIONE
+ CREATE TABLE REALIZZAZIONE(
+	ID_Realizzazione    INTEGER,
+	FK_Interfaccia      INTEGER         NOT NULL,
+	FK_Classe           INTEGER         NOT NULL
+ ); 
+ 
+ 
+ 
+  -- GESTIONE PRIMARY KEY [NULL] 
+  CREATE OR REPLACE TRIGGER SET_ID_REALIZZAZIONE
+	BEFORE INSERT ON REALIZZAZIONE
+	FOR EACH ROW
+	DECLARE
+		var_ID_Realizzazione REALIZZAZIONE.ID_Realizzazione%TYPE;
+	BEGIN
+		IF (:NEW.ID_Realizzazione IS NULL) THEN
+			SELECT NVL(MAX(R.ID_Realizzazione), 0) + 1 INTO var_ID_Realizzazione
+			FROM REALIZZAZIONE R; 
+			:NEW.ID_Realizzazione := var_ID_Realizzazione;
+		END IF;	
+	END;   
+    /  
+ 
+ 
+ 
+  -- CONSTRAINTS: REALIZZAZIONE 
+ ALTER TABLE REALIZZAZIONE
+	ADD(
+		-- Chiave primaria (implementata per facilitare l'implementazione dell'applicativo java)
+		CONSTRAINT PK_REALIZZAZIONE PRIMARY KEY (ID_Realizzazione),		
+		-- Chiave esterna
+		CONSTRAINT REALIZ_FK_INTERF FOREIGN KEY (FK_Interfaccia)            
+			REFERENCES INTERFACCIA(ID_Interfaccia) ON DELETE CASCADE,      
+		-- Chiave esterna
+		CONSTRAINT REALIZ_FK_CLASSE FOREIGN KEY (FK_Classe)                 
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,
+		-- Vincolo UNIQUE_REALIZATION
+		CONSTRAINT UNIQUE_REALIZATION UNIQUE (FK_Interfaccia, FK_Classe)
+	);
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: PARTECIPAZIONE
+ CREATE TABLE PARTECIPAZIONE(
+	ID_Partecipazione   INTEGER         NOT NULL,
+	Ruolo               VARCHAR2(50)    DEFAULT ON NULL 'no role',
+	cardinalita_Inf     CHAR(1)         NOT NULL
+											CHECK (cardinalita_Inf IN ('0', '1', '2', '3', '4', 
+																	   '5', '6', '7', '8', '9', 'N')),
+	cardinalita_Sup     CHAR(1)         NOT NULL
+											CHECK (cardinalita_Sup IN ('0', '1', '2', '3', '4', 
+																	   '5', '6', '7', '8', '9', 'N')),
+	Tipo                VARCHAR2(50)    NOT NULL,
+	Navigabilita        NUMBER(1)       DEFAULT ON NULL 1 
+											CHECK(Navigabilita IN (0,1)),
+	Qualificatore       NUMBER(1)       NOT NULL 
+											CHECK(Qualificatore IN (0,1)),
+	FK_Associazione     INTEGER         NOT NULL,
+	FK_Classe           INTEGER         NOT NULL
+ ); 
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL] 
+  CREATE OR REPLACE TRIGGER SET_ID_PARTECIPAZIONE
+	BEFORE INSERT ON PARTECIPAZIONE
+	FOR EACH ROW
+	DECLARE
+		var_ID_Partecipazione PARTECIPAZIONE.ID_Partecipazione%TYPE;
+	BEGIN
+		IF (:NEW.ID_Partecipazione IS NULL) THEN
+			SELECT NVL(MAX(P.ID_Partecipazione), 0) + 1 INTO var_ID_Partecipazione
+			FROM PARTECIPAZIONE P; 
+			:NEW.ID_Partecipazione := var_ID_Partecipazione;
+		END IF;	
+	END;   
+    /  
+	
+
+
+  -- CONSTRAINTS: PARTECIPAZIONE 
+ ALTER TABLE PARTECIPAZIONE
+	ADD(
+		 -- Chiave primaria
+		CONSTRAINT PK_PARTECIPAZIONE PRIMARY KEY (ID_Partecipazione),      
+		 -- Chiave esterna
+		CONSTRAINT PART_FK_ASSOCIAZIONE FOREIGN KEY (FK_Associazione)      
+			REFERENCES ASSOCIAZIONE(ID_Associazione) ON DELETE CASCADE,    
+		 -- Chiave esterna	
+		CONSTRAINT PART_FK_CLASSE FOREIGN KEY (FK_Classe)                   
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,       
+		-- Vincolo T_PAR
+		CONSTRAINT T_PAR CHECK (Tipo IN ('semplice', 'aggregata', 'aggregante', 
+										 'composta', 'componente')),
+		-- Vincolo PART_CHECK_INTERVAL
+		CONSTRAINT PART_CHECK_INTERVAL CHECK ((cardinalita_Inf <= cardinalita_Sup) 
+											   AND (cardinalita_Sup > '0')),
+		-- Vincolo COMP_INTERVAL
+		CONSTRAINT COMP_INTERVAL CHECK ((Tipo <> 'componente') OR 
+		                                (Tipo = 'componente' AND cardinalita_Sup = '1'))							
+	);
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: TIPO
+ CREATE TABLE TIPO(
+	ID_Tipo             INTEGER,
+	Nome                VARCHAR2(50)    NOT NULL,
+	Tipo                VARCHAR2(50)    NOT NULL,
+	FK_Scope            INTEGER,
+	FK_ClassDiagram     INTEGER,
+	FK_Parametro        INTEGER,
+	FK_Classe           INTEGER
+ );  
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL] 
+   CREATE OR REPLACE TRIGGER SET_ID_TIPO
+	BEFORE INSERT ON TIPO
+	FOR EACH ROW
+	DECLARE
+		var_ID_Tipo TIPO.ID_Tipo%TYPE;
+	BEGIN
+		IF (:NEW.ID_Tipo IS NULL) THEN
+			SELECT NVL(MAX(T.ID_Tipo), 0) + 1 INTO var_ID_Tipo
+			FROM TIPO T; 
+			:NEW.ID_Tipo := var_ID_Tipo;
+		END IF;	
+	END;   
+    /  
+
+	
+
+ -- TIPI PREDEFINITI
+ INSERT INTO TIPO VALUES(NULL, 'boolean', 'primitivo', NULL, NULL, NULL, NULL);
+ INSERT INTO TIPO VALUES(NULL, 'integer', 'primitivo', NULL, NULL, NULL, NULL);
+ INSERT INTO TIPO VALUES(NULL, 'string',  'primitivo', NULL, NULL, NULL, NULL);
+ INSERT INTO TIPO VALUES(NULL, 'real',    'primitivo', NULL, NULL, NULL, NULL);
+ COMMIT;
+
+
+
+ -- CONSTRAINTS: TIPO 
+ ALTER TABLE TIPO
+	ADD(
+		-- Chiave primaria
+		CONSTRAINT PK_TIPO PRIMARY KEY (ID_Tipo),                           
+		-- Chiave esterna
+		CONSTRAINT TIPO_FK_SCOPE FOREIGN KEY (FK_Scope)                    
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,                 
+		-- Chiave esterna	
+		CONSTRAINT TIPO_FK_CLASSDIAGRAM FOREIGN KEY (FK_ClassDiagram)       
+			REFERENCES CLASSDIAGRAM(ID_ClassDiagram) ON DELETE CASCADE,     
+			
+        -- FK_Parametro -> dopo la definizione della tabella PARAMETRO 
+		
+		-- Chiave esterna
+		CONSTRAINT TIPO_FK_CLASSE FOREIGN KEY (FK_Classe)                 
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,
+		-- Vincolo T_TYPE
+		CONSTRAINT T_TYPE CHECK (Tipo IN ('strutturato', 'classe', 
+										  'parametrico', 'primitivo', 'enumerazione')),
+		-- Vincolo IS_VALID_REF_PARAM
+		CONSTRAINT IS_VALID_REF_PARAM CHECK ((Tipo <> 'parametrico' 
+												AND FK_Parametro IS NULL) OR
+											 (Tipo = 'parametrico' 
+												AND FK_Parametro IS NOT NULL)),
+		-- Vincolo IS_VALID_REF_CLASS									 
+		CONSTRAINT IS_VALID_REF_CLASS CHECK ((Tipo <> 'classe' AND FK_Classe IS NULL) OR
+											 (Tipo = 'classe' AND FK_Classe IS NOT NULL)),
+		-- Vincolo IS_VALID_SCOPE									 
+		CONSTRAINT IS_VALID_SCOPE CHECK ((Tipo <> 'parametrico' AND FK_Scope IS NULL) OR
+									     (Tipo = 'parametrico' AND FK_Scope IS NOT NULL)),
+		-- Vincolo NOT_T_PRIM							 
+		CONSTRAINT NOT_T_PRIM CHECK ((Tipo != 'primitivo') OR 
+							        (Tipo = 'primitivo' AND Nome NOT IN 
+									('boolean', 'integer', 'string', 'real'))) NOVALIDATE,
+		-- Vincolo UNIQUE_TYPE_NAME		 					
+		CONSTRAINT UNIQUE_TYPE_NAME UNIQUE (FK_ClassDiagram, Nome, Tipo, FK_Scope)								
+	);
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- Tabella ATTRIBUTO
+ CREATE TABLE ATTRIBUTO(
+	ID_Attributo        INTEGER,
+	Nome                VARCHAR2(50)    NOT NULL,
+	Descrizione         VARCHAR2(300)   DEFAULT ON NULL 'no description',
+	cardinalita_Inf     CHAR(1)         NOT NULL
+											CHECK (cardinalita_Inf IN ('0', '1', '2', '3', '4', 
+																	  '5', '6', '7', '8', '9', 'N')),
+	cardinalita_Sup     CHAR(1)         NOT NULL
+											CHECK (cardinalita_Sup IN ('0', '1', '2', '3', '4', 
+																	  '5', '6', '7', '8', '9', 'N')),
+	h_scope             VARCHAR2(30)    DEFAULT ON NULL 'public',
+	FK_Classe           INTEGER         NOT NULL,
+	FK_Tipo             INTEGER         NOT NULL
+ );  
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_ATTRIBUTO
+	BEFORE INSERT ON ATTRIBUTO
+	FOR EACH ROW
+	DECLARE
+		var_ID_Attributo ATTRIBUTO.ID_Attributo%TYPE;
+	BEGIN
+		IF (:NEW.ID_Attributo IS NULL) THEN
+			SELECT NVL(MAX(A.ID_Attributo), 0) + 1 INTO var_ID_Attributo
+			FROM ATTRIBUTO A; 
+			:NEW.ID_Attributo := var_ID_Attributo;
+		END IF;	
+	END;   
+    / 
+	
+
+
+ -- CONSTRAINTS: ATTRIBUTO
+ ALTER TABLE ATTRIBUTO
+	ADD(
+		-- Chiave primaria
+		CONSTRAINT PK_ATTRIBUTO PRIMARY KEY (ID_Attributo),                 
+		-- Chiave esterna
+		CONSTRAINT ATTR_FK_CLASSE FOREIGN KEY (FK_Classe)                  
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,                 
+		-- Chiave esterna
+		CONSTRAINT ATTR_FK_TIPO FOREIGN KEY (FK_Tipo)                      
+			REFERENCES TIPO(ID_Tipo) ON DELETE CASCADE, 
+		-- Vincolo ATTR_SCOPE
+		CONSTRAINT ATTR_SCOPE CHECK (h_scope IN ('public', 'package', 
+											     'protected', 'private')),
+		-- Vincolo UNIQUE_ATTR_NAME
+		CONSTRAINT UNIQUE_ATTR_NAME UNIQUE (FK_Classe, Nome),
+		-- Vincolo ATTR_CHECK_INTERVAL
+		CONSTRAINT ATTR_CHECK_INTERVAL CHECK ((cardinalita_Inf <= cardinalita_Sup) 
+											   AND (cardinalita_Sup > '0'))
+	);
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: COMPOSIZIONE
+ CREATE TABLE COMPOSIZIONE(
+	ID_Composizione     INTEGER,
+	FK_Strutturato      INTEGER         NOT NULL,
+	FK_Tipo             INTEGER         NOT NULL
+  );   
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_COMPOSIZIONE
+	BEFORE INSERT ON COMPOSIZIONE
+	FOR EACH ROW
+	DECLARE
+		var_ID_Composizione COMPOSIZIONE.ID_Composizione%TYPE;
+	BEGIN
+		IF (:NEW.ID_Composizione IS NULL) THEN
+			SELECT NVL(MAX(C.ID_Composizione), 0) + 1 INTO var_ID_Composizione
+			FROM COMPOSIZIONE C; 
+			:NEW.ID_Composizione := var_ID_Composizione;
+		END IF;	
+	END;   
+    / 
+
+
+
+ -- CONSTRAINTS: COMPOSIZIONE
+ ALTER TABLE COMPOSIZIONE
+	ADD(
+		-- Chiave primaria (implementata per facilitare l'implementazione dell'applicativo java)
+		CONSTRAINT PK_COMPOSIZIONE PRIMARY KEY (ID_Composizione),		
+		-- Chiave esterna
+		CONSTRAINT COMP_FK_STRUTTURATO FOREIGN KEY (FK_Strutturato)         
+			REFERENCES TIPO(ID_Tipo) ON DELETE CASCADE,        
+		-- Chiave esterna
+		CONSTRAINT COMP_FK_TIPO FOREIGN KEY (FK_Tipo)                       
+			REFERENCES TIPO(ID_Tipo) ON DELETE CASCADE,
+		-- Vincolo UNIQUE_COMPOSITION
+		CONSTRAINT UNIQUE_COMPOSITION UNIQUE (FK_Strutturato, FK_Tipo)
+	); 
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: LITERAL
+ CREATE TABLE LITERAL(
+	ID_Literal          INTEGER,
+	Literal             VARCHAR2(50)    NOT NULL,
+	FK_Enumerazione     INTEGER         NOT NULL
+ ); 
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_LITERAL
+	BEFORE INSERT ON LITERAL
+	FOR EACH ROW
+	DECLARE
+		var_ID_Literal LITERAL.ID_Literal%TYPE;
+	BEGIN
+		IF (:NEW.ID_Literal IS NULL) THEN
+			SELECT NVL(MAX(L.ID_Literal), 0) + 1 INTO var_ID_Literal
+			FROM LITERAL L; 
+			:NEW.ID_Literal := var_ID_Literal;
+		END IF;	
+	END;   
+    / 
+	
+	
+
+ -- CONSTRAINTS: LITERAL 
+ ALTER TABLE LITERAL
+	ADD(
+		-- Chiave primaria (implementata per facilitare l'implementazione dell'applicativo java)
+		CONSTRAINT PK_LITERAL PRIMARY KEY (ID_Literal),
+		-- Chiave esterna
+		CONSTRAINT LITERAL_FK_ENUMERAZIONE FOREIGN KEY (FK_Enumerazione)    
+			REFERENCES TIPO(ID_Tipo) ON DELETE CASCADE,
+		-- Vincolo UNIQUE_LITERAL
+		CONSTRAINT UNIQUE_LITERAL UNIQUE (Literal, FK_Enumerazione)
+	);   
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- Tabella METODO
+ CREATE TABLE METODO(
+	ID_Metodo           INTEGER,
+	Nome                VARCHAR2(50)    NOT NULL, 
+	Descrizione         VARCHAR2(300)   DEFAULT ON NULL 'no description',
+	h_scope             VARCHAR2(30)    DEFAULT ON NULL 'public',
+	FK_Classe           INTEGER,
+	FK_Interfaccia      INTEGER,
+	FK_Tipo             INTEGER
+ );   
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_METODO
+	BEFORE INSERT ON METODO
+	FOR EACH ROW
+	DECLARE
+		var_ID_Metodo METODO.ID_Metodo%TYPE;
+	BEGIN
+		IF (:NEW.ID_Metodo IS NULL) THEN
+			SELECT NVL(MAX(M.ID_Metodo), 0) + 1 INTO var_ID_Metodo
+			FROM METODO M; 
+			:NEW.ID_Metodo := var_ID_Metodo;
+		END IF;	
+	END;   
+    / 
+
+
+
+ -- CONSTRAINTS: METODO
+ ALTER TABLE METODO
+	ADD( 
+	    -- Chiave primaria
+		CONSTRAINT PK_METODO PRIMARY KEY (ID_Metodo),                      
+		-- Chiave esterna
+		CONSTRAINT METODO_FK_CLASSE FOREIGN KEY (FK_Classe)                 
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE,
+		-- Chiave esterna
+		CONSTRAINT METODO_FK_INTERFACCIA FOREIGN KEY (FK_Interfaccia)      
+			REFERENCES INTERFACCIA(ID_Interfaccia) ON DELETE CASCADE,
+		-- Chiave esterna
+		CONSTRAINT METODO_FK_TIPO FOREIGN KEY (FK_Tipo)                    
+			REFERENCES TIPO(ID_Tipo) ON DELETE SET NULL,
+		-- Vincolo METH_SCOPE
+		CONSTRAINT METH_SCOPE CHECK (h_scope IN ('public', 'package', 
+												 'protected', 'private')),
+		-- Vincolo METH_IS_PUBLIC
+		CONSTRAINT METH_IS_PUBLIC CHECK ((FK_Interfaccia IS NULL) OR 
+		                                 (FK_Interfaccia IS NOT NULL 
+											AND h_scope = 'public')),
+		-- Vincolo METH_OF
+		CONSTRAINT METH_OF CHECK((FK_Interfaccia IS NULL AND FK_Classe IS NOT NULL) OR 
+								 (FK_Interfaccia IS NOT NULL AND FK_Classe IS NULL))
+	);  
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ -- Tabella PARAMETRO
+ CREATE TABLE PARAMETRO(
+	ID_Parametro        INTEGER,
+	Nome                VARCHAR2(50)    NOT NULL, 
+	Posizione           INTEGER         NOT NULL,
+	FK_Classe           INTEGER,
+	FK_Metodo           INTEGER,
+	FK_Tipo             INTEGER
+ ); 
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_PARAMETRO
+	BEFORE INSERT ON PARAMETRO
+	FOR EACH ROW
+	DECLARE
+		var_ID_Parametro PARAMETRO.ID_Parametro%TYPE;
+	BEGIN
+		IF (:NEW.ID_Parametro IS NULL) THEN
+			SELECT NVL(MAX(P.ID_Parametro), 0) + 1 INTO var_ID_Parametro
+			FROM PARAMETRO P; 
+			:NEW.ID_Parametro := var_ID_Parametro;
+		END IF;	
+	END;   
+    / 
+
+
+
+  -- CONSTRAINTS: PARAMETRO
+ ALTER TABLE PARAMETRO
+	ADD(
+		-- Chiave primaria
+		CONSTRAINT PK_Parametro PRIMARY KEY (ID_Parametro),                 
+		-- Chiave esterna
+		CONSTRAINT PARAMETRO_FK_CLASSE FOREIGN KEY (FK_Classe)              
+			REFERENCES CLASSE(ID_Classe) ON DELETE CASCADE, 
+		-- Chiave esterna
+		CONSTRAINT PARAMETRO_FK_METODO FOREIGN KEY (FK_Metodo)              
+			REFERENCES METODO(ID_Metodo) ON DELETE CASCADE,
+		-- Chiave esterna
+		CONSTRAINT PARAMETRO_FK_TIPO FOREIGN KEY (FK_Tipo)                  
+			REFERENCES TIPO(ID_Tipo) ON DELETE CASCADE,
+		-- Vincolo 
+		CONSTRAINT PARAM_BELONGS_TO CHECK ((FK_Classe IS NOT NULL 
+												AND FK_Metodo IS NULL) OR
+										   (FK_Classe IS NULL 
+											AND FK_Metodo IS NOT NULL)),
+		-- Vincolo NO_TYPE
+		CONSTRAINT NO_TYPE CHECK ((FK_Classe IS NULL 
+										AND FK_Tipo IS NOT NULL) OR
+		                          (FK_Classe IS NOT NULL 
+										AND FK_Tipo IS NULL)),
+		-- Vincolo UNIQUE_POS
+		CONSTRAINT UNIQUE_POS UNIQUE (Posizione, FK_Classe, FK_Metodo)
+	); 
+	
+	
+	
+ -- CONSTRAINTS: TIPO -> FK_Parametro
+ ALTER TABLE TIPO
+	ADD(
+		-- Chiave esterna
+		CONSTRAINT TIPO_FK_PARAMETRO FOREIGN KEY (FK_Parametro)            
+			REFERENCES PARAMETRO(ID_Parametro) ON DELETE CASCADE 
+	); 
+	
+	
+	
+ /*____________________________________________________________________________________*/
+
+
+
+ -- TABLE: QUALIFICAZIONE
+ CREATE TABLE QUALIFICAZIONE(
+	ID_Qualificazione 	INTEGER,
+	FK_Partecipazione   INTEGER         NOT NULL,
+	FK_Attributo        INTEGER         NOT NULL
+ ); 
+
+
+
+ -- GESTIONE PRIMARY KEY [NULL]
+ CREATE OR REPLACE TRIGGER SET_ID_QUALIFICAZIONE
+	BEFORE INSERT ON QUALIFICAZIONE
+	FOR EACH ROW
+	DECLARE
+		var_ID_Qualificazione QUALIFICAZIONE.ID_Qualificazione%TYPE;
+	BEGIN
+		IF (:NEW.ID_Qualificazione IS NULL) THEN
+			SELECT NVL(MAX(Q.ID_Qualificazione), 0) + 1 INTO var_ID_Qualificazione
+			FROM QUALIFICAZIONE Q; 
+			:NEW.ID_Qualificazione := var_ID_Qualificazione;
+		END IF;	
+	END;   
+    / 
+
+
+
+  -- CONSTRAINTS: QUALIFICAZIONE
+ ALTER TABLE QUALIFICAZIONE
+	ADD(
+		-- Chiave primaria (implementata per facilitare l'implementazione dell'applicativo java)
+		CONSTRAINT PK_QUALIFICAZIONE PRIMARY KEY (ID_Qualificazione),
+		-- Chiave esterna
+		CONSTRAINT QUALIF_FK_PARTECIPAZIONE FOREIGN KEY (FK_Partecipazione) 
+			REFERENCES PARTECIPAZIONE(ID_Partecipazione) ON DELETE CASCADE,
+		-- Chiave esterna
+		CONSTRAINT QUALIF_FK_ATTRIBUTO FOREIGN KEY (FK_Attributo)           
+			REFERENCES ATTRIBUTO(ID_Attributo) ON DELETE CASCADE,
+		-- Vincolo UNIQUE_QUALIF
+		CONSTRAINT UNIQUE_QUALIF UNIQUE (FK_Partecipazione, FK_Attributo)
+	);   
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ /* Il seguente trigger verifica che i vincoli NO_CYCLE_CLASS e IMMUTABLE_TYPE siano 
+    rispettati nell'UPDATE della tabella CLASSE. 
+	Dal momento che il trigger necessita di effettuare delle operazioni di selezione
+	dalla stessa tabella interessata dall'UPDATE (ovvero CLASSE), si è creata una vista 
+	di "appoggio": VIEW_CLASSE. Ogni UPDATE che interessa un'istanza di CLASSE deve 
+	essere eseguito sulla vista VIEW_CLASSE. 
+	Si osservi che inoltre il trigger non consente la modifica della chiave esterna di 
+	CLASSDIAGRAM, questo perchè la classe (o le classi) interessate dall'update potrebbero 
+	partecipare ad associazioni situate nel CLASSDIAGRAM di appartenenza. 
+ */
+   
+ -- Vista utilizzata nel trigger NO_CYCLE_CLASS 
+ CREATE OR REPLACE VIEW VIEW_CLASSE AS(
+	SELECT * 
+	FROM CLASSE
+ );
+
+ CREATE OR REPLACE TRIGGER NO_CYCLE_CLASS
+	INSTEAD OF UPDATE ON VIEW_CLASSE 
+	FOR EACH ROW
+	DECLARE
+		violazione INTEGER := 0;
+	BEGIN
+		-- Verifico il vincolo IMMUTABLE_TYPE
+		IF (:OLD.Tipo <> :NEW.Tipo) THEN  
+			RAISE_APPLICATION_ERROR(-20001, 'IMMUTABLE_TYPE - violato.');
+		END IF;
+		-- Verifico se la chiave esterna di CLASSDIAGRAM è mutata
+		IF (:OLD.FK_ClassDiagram <> :NEW.FK_ClassDiagram) THEN
+			RAISE_APPLICATION_ERROR(-20002, 'IMMUTABLE_FK - La chiave esterna non può mutare.');
+		END IF;
+		
+		IF (:NEW.FK_Generale IS NOT NULL) THEN
+			-- La generale è cambiata? Se sì procedo alla verifica di NO_CYCLE_CLASS
+			IF (:OLD.FK_Generale IS NULL OR (:OLD.FK_Generale <> :NEW.FK_Generale)) THEN  
+				-- Verifico se :NEW.FK_Generale è discendente di :NEW.ID_Classe
+				-- nel caso lo fosse allora la nuova relazione gerarchica comporterebbe un ciclo.
+				SELECT COUNT(*) INTO violazione
+				FROM CLASSE C
+				WHERE C.ID_Classe = :NEW.FK_Generale
+				CONNECT BY PRIOR C.ID_Classe = C.FK_Generale
+				START WITH C.ID_Classe = :NEW.ID_Classe;
+				
+				IF (violazione <> 0) THEN -- L'update provoca un ciclo!
+					RAISE_APPLICATION_ERROR(-20003, 'NO_CYCLE_CLASS - violato.');
+				END IF;
+			
+			END IF;
+					
+		END IF;
+		-- Se non è stato riscontrato alcun errore si effettua l'update nella tabella principale.
+		-- I RAISE saltano direttamente all'END del blocco PL/SQL di appartenenza per tanto, in condizioni
+		-- di errore, l'UPDATE non viene mai eseguito.
+		UPDATE CLASSE 
+			SET Nome = :NEW.Nome,
+				Descrizione = :NEW.Descrizione, 
+				FK_Generale = :NEW.FK_Generale,
+				FK_Associazione = :NEW.FK_Associazione
+				WHERE ID_Classe = :OLD.ID_Classe;
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+ 
+ /* Il seguente trigger verifica che il vincolo NO_CYCLE_INTERFACE sia rispettato.
+    Tale vincolo, a differenza di NO_CYCLE_CLASS può essere violato sia nell'INSERT
+    che nell'UPDATE.
+	Anche in questo caso il trigger effettua delle operazioni di selezione nella stessa
+	tabella interessata dall'operazione di INSERT/UPDATE (ovvero SPECIAL_INTERF) per tanto 
+	è stata definita una vista di "appoggio": VIEW_SPECIAL_INTERF. Ogni INSERT o UPDATE su
+	SPECIAL_INTERF deve essere eseguito sulla sua vista VIEW_SPECIAL_INTERF.
+ */
+
+ -- Vista utilizzata nel trigger NO_CYCLE_INTERFACE 
+ CREATE OR REPLACE VIEW VIEW_SPECIAL_INTERF AS(
+	SELECT *
+	FROM SPECIAL_INTERF
+ );
+ 
+  CREATE OR REPLACE TRIGGER NO_CYCLE_INTERFACE
+	INSTEAD OF INSERT OR UPDATE ON VIEW_SPECIAL_INTERF 
+	FOR EACH ROW
+	DECLARE
+		violazione INTEGER := 0;
+	BEGIN	
+		-- Verifico se l'INSERT/UPDATE provoca o meno un ciclo
+		SELECT COUNT(*) INTO violazione
+		FROM SPECIAL_INTERF S_I
+		WHERE S_I.FK_Specializzata = :NEW.FK_Generale 
+		CONNECT BY S_I.FK_Generale = PRIOR S_I.FK_Specializzata
+		START WITH S_I.FK_Generale = :NEW.FK_Specializzata;
+
+		IF (violazione <> 0) THEN -- L'INSERT/UPDATE provoca un ciclo!
+			RAISE_APPLICATION_ERROR(-20004, 'NO_CYCLE_INTERFACE - violato.');
+		END IF;
+		-- Nel caso in cui l'operazione fosse di INSERT
+		IF INSERTING THEN 
+			INSERT INTO SPECIAL_INTERF VALUES (NULL, :NEW.FK_Generale, :NEW.FK_Specializzata);
+		-- Nel caso in cui l'operazione fosse di UPDATE
+		ELSIF UPDATING THEN 
+			UPDATE SPECIAL_INTERF
+				SET FK_Generale = :NEW.FK_Generale,
+					FK_Specializzata = :NEW.FK_Specializzata
+				WHERE FK_Generale = :OLD.FK_Generale AND
+					  FK_Specializzata = :OLD.FK_Specializzata;
+		END IF;
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ /* Il seguente trigger, in caso di INSERT nella tabella CLASSE gestisce la definizione di
+    un tipo "classe" associato alla nuova istanza di CLASSE, mentre nel caso di UPDATE 
+	si occupa della rinominazione del tipo "classe" precedentemente definito.
+ */
+ 
+  CREATE OR REPLACE TRIGGER DEF_TYPE_CLASS
+	AFTER INSERT OR UPDATE ON CLASSE
+	FOR EACH ROW 
+	BEGIN 
+		-- Nel caso in cui l'operazione fosse di INSERT definisco il nuovo tipo
+		-- "classe" avente lo stesso nome della nuova classe.
+		IF INSERTING THEN
+			INSERT INTO TIPO VALUES(NULL, :NEW.Nome, 'classe', NULL, 
+									:NEW.FK_ClassDiagram, NULL, :NEW.ID_Classe);
+		-- Nel caso in cui l'operazione fosse di UPDATE 
+		ELSIF UPDATING THEN 
+			-- Se il nome della classe è cambiato allora procedo alla rinominazione 
+			-- del tipo "classe" associato alla classe interessata dall'UPDATE
+			IF (:OLD.Nome <> :NEW.Nome) THEN  			
+				UPDATE TIPO  
+					SET Nome = :NEW.Nome
+                    WHERE FK_Classe = :OLD.ID_Classe;
+			END IF;
+		END IF;	
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ /* Il seguente trigger, in caso di INSERT nella tabella PARAMETRO gestisce la definizione di 
+	un tipo "parametrico" associato alla nuova istanza di PARAMETRO (solo nel caso in cui 
+	il nuovo parametro fosse associato a sua volta ad una classe "parametrica"), mentre nel 
+	caso di UPDATE si occupa della rinominazione del tipo "parametrico" precedentemente definito.
+ */
+ 
+  CREATE OR REPLACE TRIGGER DEF_TYPE_PARAM
+	AFTER INSERT OR UPDATE ON PARAMETRO
+	FOR EACH ROW 
+	DECLARE
+		var_ClassDiagram CLASSDIAGRAM.ID_ClassDiagram%TYPE;
+	BEGIN 
+		 -- Il parametro appartiene ad un classe "Parametrica"?
+		IF (:NEW.FK_Classe IS NOT NULL) THEN 
+			-- Nel caso in cui l'operazione fosse di INSERT 
+			IF INSERTING THEN 	
+				-- Prelevo la chiave primaria del Class Diagram
+				SELECT C.FK_ClassDiagram INTO var_ClassDiagram
+				FROM Classe C 
+				WHERE C.ID_Classe = :NEW.FK_Classe;
+				
+				INSERT INTO TIPO VALUES(NULL, :NEW.Nome, 'parametrico', 
+										:NEW.FK_Classe, var_ClassDiagram, :NEW.ID_Parametro, NULL);
+			-- Nel caso in cui l'operazione fosse di UPDATE 
+			ELSIF UPDATING THEN
+				-- Se il nome del parametro è cambiato allora procedo alla rinominazione 
+				-- del tipo "parametrico" associato al parametro interessato dall'UPDATE
+				IF (:OLD.Nome <> :NEW.Nome) THEN
+					UPDATE TIPO T SET
+						T.Nome = :NEW.Nome
+						WHERE T.FK_Parametro = :OLD.ID_Parametro;
+				END IF;
+			END IF;
+		END IF;		
+	END;
+	/
+ 
+ 
+ 
+ /*____________________________________________________________________________________*/
+ 
+ 
+ 
+ /* Il seguente trigger verifica che il vincolo VALID_LITERAL venga rispettato, sia 
+	in caso di INSERT che di UPDATE.
+ */
+ 
+ CREATE OR REPLACE TRIGGER VALID_LITERAL
+	BEFORE INSERT OR UPDATE ON LITERAL
+	FOR EACH ROW 
+	DECLARE
+		var_Tipo TIPO.Tipo%TYPE;
+	BEGIN 
+		-- Prelevo il "tipo" del tipo associato
+		SELECT T.Tipo INTO var_Tipo
+		FROM TIPO T 
+		WHERE T.ID_Tipo = :NEW.FK_Enumerazione;
+		-- Se il tipo non è enumerazione allora il vincolo è violato.
+		IF (var_Tipo <> 'enumerazione') THEN
+			RAISE_APPLICATION_ERROR(-20005, 'VALID_LITERAL - violato.'); 	
+		END IF;
+	END;
+	/
+ 
+ 
+ 
+ /*____________________________________________________________________________________*/
+ 
+ 
+
+ /* Il seguente trigger verifica che il vincolo CANT_QUALIF venga rispettato, sia
+	in caso di INSERT che di UPDATE.
+ */ 
+ 
+ CREATE OR REPLACE TRIGGER CANT_QUALIF
+	BEFORE INSERT OR UPDATE ON QUALIFICAZIONE
+	FOR EACH ROW
+	DECLARE
+		counter INTEGER := 0;
+		qualificatore PARTECIPAZIONE.qualificatore%TYPE;
+		var_ID_Classe PARTECIPAZIONE.FK_Classe%TYPE;
+	BEGIN
+		-- Prelevo il qualificatore e la chiave esterna di CLASSE (FK_Classe)
+		SELECT P.qualificatore, P.FK_Classe INTO qualificatore, var_ID_Classe
+		FROM PARTECIPAZIONE P 
+		WHERE P.ID_Partecipazione = :NEW.FK_Partecipazione;
+		-- Verifico se la partecipazione prevede o meno qualificatore
+		IF (qualificatore = 0) THEN 
+			RAISE_APPLICATION_ERROR(-20006, 'CANT_QUALIF - violato.'); 
+		END IF;
+		-- Verifico se l'attributo qualificante appartiene a FK_Classe
+		SELECT COUNT(*) INTO counter 
+		FROM ATTRIBUTO A 
+		WHERE A.ID_Attributo = :NEW.FK_Attributo
+		AND A.FK_Classe = var_ID_Classe;
+		-- Se counter è uguale a zero allora l'attributo non appartiene ad FK_Classe
+		IF (counter = 0) THEN 
+			RAISE_APPLICATION_ERROR(-20006, 'CANT_QUALIF - violato.'); 
+		END IF;
+	END;
+	/
+	
+	
+
+ /*____________________________________________________________________________________*/
+
+
+
+ /* La seguente funzione calcola il grado dell'associazione con ID = var_ID_Associazione.
+	Il grado viene calcolato contando il numero di istanze di partecipazione associate 
+	all'associazione interessata.
+ */
+
+  CREATE OR REPLACE FUNCTION getGrado(var_ID_Associazione ASSOCIAZIONE.ID_Associazione%TYPE) 
+	RETURN INTEGER IS 
+		counter INTEGER;
+	BEGIN
+		-- Conto il numero di istanze di partecipazione associate a var_ID_Associazione
+		SELECT COUNT(*) INTO counter
+		FROM PARTECIPAZIONE P 
+		WHERE P.FK_Associazione = var_ID_Associazione;
+		-- Ritorno il valore del contatore
+		RETURN counter;
+	END;
+	/
+  
+  
+  
+ /*____________________________________________________________________________________*/
+  
+  
+  
+ /* Il seguente trigger verifica la validità di diversi vincoli quali: UNIQUE_ASSOC_NAME
+	(il quale è verificato da un trigger dal momento che potendo essere il nome di un'associazione
+	nullo potrebbe accadere che (FK_ClassDiagram1, Nome1) = (FK_ClassDiagram2, Nome2)), 
+    CHECK_PART, EXC_COMP, VALID_ASSOC.
+	Dal momento che il trigger effettua operazioni di selezione sulla tabella interessata 
+	è stata definita una vista di "appoggio": VIEW_ASSOCIAZIONE. Ogni INSERT sulla tabella ASSOCIAZIONE 
+	deve essere effettuato sulla vista VIEW_ASSOCIAZIONE.
+ */
+  
+ -- Vista utilizzata nel trigger CNS_INSTEAD_ASSOCIAZIONE e CNS_INSTEAD_PARTECIPAZIONE
+ CREATE OR REPLACE VIEW VIEW_PARTECIPAZIONE AS(
+	SELECT *
+	FROM PARTECIPAZIONE P 
+ );
+ 
+ -- Vista utilizzata nel trigger CNS_INSTEAD_ASSOCIAZIONE. Visualizza per ogni associazione 
+ -- almeno due partecipazioni.
+ CREATE OR REPLACE VIEW VIEW_ASSOCIAZIONE(ID_Associazione, Nome, Descrizione, Tipo, FK_ClassDiagram,
+										  RuoloP1, cardinalitaInfP1, cardinalitaSupP1, TipoP1,
+										  NavigabilitaP1, QualificatoreP1, FK_ClasseP1, 
+										  RuoloP2, cardinalitaInfP2, cardinalitaSupP2, TipoP2,
+										  NavigabilitaP2, QualificatoreP2, FK_ClasseP2) AS(
+										  
+	SELECT A.ID_Associazione, A.Nome, A.Descrizione, A.Tipo, A.FK_ClassDiagram, 
+	       P1.Ruolo, P1.cardinalita_Inf, P1.cardinalita_Sup, P1.Tipo,
+		   P1.Navigabilita, P1.Qualificatore, P1.FK_Classe, P2.Ruolo, P2.cardinalita_Inf, 
+		   P2.cardinalita_Sup, P2.Tipo, P2.Navigabilita, P2.Qualificatore, P2.FK_Classe
+		   
+	FROM (ASSOCIAZIONE A JOIN PARTECIPAZIONE P1 ON A.ID_Associazione = P1.FK_Associazione) 
+		  JOIN PARTECIPAZIONE P2 ON A.ID_Associazione = P2.FK_Associazione
+ );
+ 
+ CREATE OR REPLACE TRIGGER CNS_INSTEAD_ASSOCIAZIONE 
+	INSTEAD OF INSERT ON VIEW_ASSOCIAZIONE 
+	FOR EACH ROW
+	DECLARE
+		counter INTEGER := 0;
+		var_ID_Associazione ASSOCIAZIONE.ID_Associazione%TYPE;
+		var_ID_Classe CLASSE.ID_Classe%TYPE;
+	BEGIN 
+		-- Potrei violare il vincolo UNIQUE_ASSOC_NAME
+		IF (:NEW.Nome IS NOT NULL) THEN 
+			-- Verifico se è presente un'associazione con nome = :NEW.Nome
+			SELECT COUNT(*) INTO counter
+			FROM ASSOCIAZIONE A 
+			WHERE A.FK_ClassDiagram = :NEW.FK_ClassDiagram
+			AND A.Nome = :NEW.Nome;
+			-- Il nome è già esistente
+			IF (counter <> 0) THEN 
+				RAISE_APPLICATION_ERROR(-20007, 'UNIQUE_ASSOC_NAME - violato.'); 
+			END IF;
+		END IF;	
+		-- Verifico se i tipi delle partecipazioni sono corretti ovvero se:
+		-- Associazione = AGGREGAZIONE => P1: Aggregata/Aggregante e P2: Aggregante/Aggregata
+		-- Associazione = COMPOSIZIONE => P1: Composta/Componente e P2: Componente/Composta
+		-- Associazione = SEMPLICE => P1: Semplice e P2: Semplice
+		IF (:NEW.Tipo = 'aggregazione' AND  
+		   (:NEW.TipoP1 <> 'aggregante' OR :NEW.TipoP2 <> 'aggregata') AND
+		   (:NEW.TipoP1 <> 'aggregata' OR :NEW.TipoP2 <> 'aggregante')) THEN
+		   
+			RAISE_APPLICATION_ERROR(-20008, 'CHECK_PART - violato.'); 
+			
+		ELSIF (:NEW.Tipo = 'composizione' AND 
+			  (:NEW.TipoP1 <> 'componente' OR :NEW.TipoP2 <> 'composta') AND 
+			  (:NEW.TipoP1 <> 'composta' OR :NEW.TipoP2 <> 'componente')) THEN
+			  
+			RAISE_APPLICATION_ERROR(-20008, 'CHECK_PART - violato.'); 
+			
+		ELSIF (:NEW.Tipo = 'semplice' AND 
+			  (:NEW.TipoP1 <> 'semplice' OR :NEW.TipoP2 <> 'semplice')) THEN
+				  
+			RAISE_APPLICATION_ERROR(-20008, 'CHECK_PART - violato.'); 
+				  
+		END IF;
+		
+		-- Verifico se è rispettato il vincolo EXC_COMP
+		IF (:NEW.Tipo = 'composizione') THEN
+				
+			-- Prelevo l'ID della classe componente
+			IF(:NEW.TipoP1 = 'componente') THEN
+				var_ID_Classe := :NEW.FK_ClasseP1;
+			ELSE
+				var_ID_Classe := :NEW.FK_ClasseP2;
+			END IF;
+			
+			-- Verifico se la classe è gia componente di un'altra
+			SELECT COUNT(*) INTO counter
+			FROM PARTECIPAZIONE P 
+			WHERE P.FK_Classe = var_ID_Classe
+			AND P.Tipo = 'componente';
+			-- Se il contatore è diverso da zero allora la classe componente ne compone gia un'altra.
+			IF (counter <> 0) THEN
+				RAISE_APPLICATION_ERROR(-20009, 'EXC_COMP - violato.'); 
+			END IF;		
+		END IF;
+		
+		-- Inserimento in ASSOCIAZIONE
+		INSERT INTO ASSOCIAZIONE VALUES (NULL, :NEW.Nome, :NEW.Descrizione, 
+		                                 :NEW.Tipo, :NEW.FK_ClassDiagram);
+										 
+		-- Prelevo l'ID associato ad ASSOCIAZIONE il quale è generato dal trigger SET_ID_ASSOCIAZIONE
+		SELECT MAX(A.ID_Associazione) INTO var_ID_Associazione
+		FROM ASSOCIAZIONE A 
+		WHERE A.FK_ClassDiagram = :NEW.FK_ClassDiagram;
+		-- Inserimento in PARTECIPAZIONE
+		INSERT INTO VIEW_PARTECIPAZIONE VALUES(NULL, :NEW.RuoloP1, :NEW.cardinalitaInfP1, 
+											   :NEW.cardinalitaSupP1, :NEW.tipoP1,
+                                               :NEW.NavigabilitaP1, :NEW.QualificatoreP1, 
+											   var_ID_Associazione, :NEW.FK_ClasseP1);	
+											   
+        INSERT INTO VIEW_PARTECIPAZIONE VALUES(NULL, :NEW.RuoloP2, :NEW.cardinalitaInfP2, 
+		                                       :NEW.cardinalitaSupP2, :NEW.tipoP2,
+                                               :NEW.NavigabilitaP2, :NEW.QualificatoreP2, 
+											   var_ID_Associazione, :NEW.FK_ClasseP2);
+		
+		-- Verifico se entrambe le partecipazioni sono state inserite.
+		SELECT COUNT(*) INTO counter
+        FROM PARTECIPAZIONE P 
+        WHERE P.FK_Associazione = var_ID_Associazione;
+		
+		-- In caso negativo elimino l'associazione la quale in cascade
+		-- provocherà l'eliminazione dell'eventuale partecipazione associata
+		IF (counter <> 2) THEN
+            DELETE FROM ASSOCIAZIONE A
+            WHERE A.ID_Associazione = var_ID_Associazione;
+        END IF;
+	END;
+    /	
+	
+
+ /*____________________________________________________________________________________*/
+
+
+
+ /* Il seguente trigger verifica la validità di diversi vincoli quali: AGGR_BIN, COMP_BIN,
+    CHECK_PART e QUALIF_ASSOC.
+	Dal momento che il trigger effettua operazioni di selezione sulla tabella interessata 
+	è stata definita una vista di "appoggio": VIEW_PARTECIPAZIONE. Ogni INSERT sulla tabella 
+	PARTECIPAZIONE deve essere effettuato sulla vista VIEW_PARTECIPAZIONE.
+ */
+	
+ CREATE OR REPLACE TRIGGER CNS_INSTEAD_PARTECIPAZIONE
+	INSTEAD OF INSERT ON VIEW_PARTECIPAZIONE
+	FOR EACH ROW 
+	DECLARE
+		tipoAssociazione ASSOCIAZIONE.Tipo%TYPE;
+		grado INTEGER;
+		qualificazioni INTEGER;
+	BEGIN
+		
+		-- Prelevo il grado dell'associazione
+		grado := getGrado(:NEW.FK_Associazione);
+		
+		-- Prelevo il numero delle partecipazioni qualificate
+		SELECT COUNT(*) INTO qualificazioni
+		FROM PARTECIPAZIONE P 
+		WHERE P.Qualificatore = 1 
+		AND P.FK_Associazione = :NEW.FK_Associazione;
+		
+		-- Prelevo il tipo dell'associazione 
+		SELECT A.Tipo INTO tipoAssociazione
+		FROM ASSOCIAZIONE A 
+		WHERE A.ID_Associazione = :NEW.FK_Associazione;
+		
+		-- Se un'associazione è aggregazione o composizione o qualificata allora è binaria
+		IF ((tipoAssociazione = 'aggregazione' OR tipoAssociazione = 'composizione' OR
+		     qualificazioni <> 0) AND grado > 1) THEN
+			 
+			RAISE_APPLICATION_ERROR(-20010, 'AGGR_BIN OR COMP_BIN OR QUALIF_ASSOC - violato.');
+			
+		END IF;
+		
+		-- Verifico che il tipo di partecipazione sia coerente con il 
+		-- tipo dell'associazione. Il controllo per le aggregazioni e le
+		-- composizioni è già effettuato in CNS_INSTEAD_ASSOCIAZIONE
+		IF (tipoAssociazione = 'semplice') THEN 		
+			-- Vìolo il vincolo CHECK_PART?
+			IF (:NEW.Tipo <> 'semplice') THEN
+				RAISE_APPLICATION_ERROR(-20008, 'CHECK_PART - violato.'); 
+			END IF;		
+			-- Vìolo il vincolo QUALIF_ASSOC?
+			IF (grado > 1 AND :NEW.qualificatore <> 0) THEN
+				RAISE_APPLICATION_ERROR(-20011, 'QUALIF_ASSOC - violato.'); 
+			END IF;			
+		END IF;
+		-- Inserimento in PARTECIPAZIONE
+		INSERT INTO PARTECIPAZIONE VALUES(NULL, :NEW.Ruolo, :NEW.cardinalita_Inf, :NEW.cardinalita_Sup, :NEW.Tipo,
+		                                  :NEW.Navigabilita, :NEW.Qualificatore, :NEW.FK_Associazione, :NEW.FK_Classe);										  
+	END;
+	/
+	
+	
+	
+ /*____________________________________________________________________________________*/
+	
+	
+	
+ /* Il seguente trigger verifica si occupa della cancellazione delle partecipazioni associate
+	ad una classe (DEL_CLASS). Tale vincolo non è stato gestito con ON DELETE CASCADE dal momento che 
+	una classe potrebbe essere coinvolta in una o più associazioni binarie, in tal caso, per rispettare 
+	il vincolo VALID_ASSOC è necessario eliminare tutte le associazioni binarie in questione.
+	L'eventuale eliminazione è gestita dal trigger DEL_PART.
+	Ogni cancellazione su CLASSE deve avvenire sulla vista associata VIEW_CLASSE.
+ */
+ 
+ CREATE OR REPLACE TRIGGER DEL_CLASS
+    INSTEAD OF DELETE ON VIEW_CLASSE
+	FOR EACH ROW 
+	BEGIN
+		-- Effettuo il DELETE di tutte le partecipazioni in cui la classe 
+		-- interessata dall'eliminazione è coinvolta
+		DELETE FROM VIEW_PARTECIPAZIONE P 
+		WHERE P.FK_Classe = :OLD.ID_Classe;
+		-- Infine elimino la classe
+		DELETE FROM Classe C 
+		WHERE C.ID_Classe = :OLD.ID_Classe;
+	END;
+	/
+ 
+
+
+ /*____________________________________________________________________________________*/
+ 
+ 
+ 
+  /* Il seguente trigger verifica si occupa della cancellazione delle partecipazioni.
+	 Quando una partecipazione viene eliminata, l'associazione di appartenenza potrebbe 
+	 violare il vincolo VALID_ASSOC, per tanto nel caso in cui l'associazione fosse binaria, 
+	 questa verrebbe cancellata.
+ */
+ 
+ CREATE OR REPLACE TRIGGER DEL_PART
+	INSTEAD OF DELETE ON VIEW_PARTECIPAZIONE
+	FOR EACH ROW
+	BEGIN
+		-- Se il grado della partecipazione interessata dall'eliminazione è binaria
+		-- allora procedo direttamente alla cancellazione dell'associazione
+		IF getGrado(:OLD.FK_Associazione) = 2 THEN
+			DELETE FROM ASSOCIAZIONE A 
+            WHERE A.ID_Associazione = :OLD.FK_Associazione;
+		ELSE
+			-- Nel caso non fosse binaria allora elimino la sola partecipazione
+			DELETE FROM PARTECIPAZIONE P
+			WHERE P.ID_Partecipazione = :OLD.FK_Associazione;
+		END IF;
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/	
+
+	
+	
+ /* Il seguente trigger verifica la validità del vincolo: IS_VALID_COMP.
+ */
+ 
+ CREATE OR REPLACE TRIGGER IS_VALID_COMP
+	BEFORE INSERT ON COMPOSIZIONE
+	FOR EACH ROW 
+	DECLARE
+		var_Tipo_Composto TIPO.Tipo%TYPE;
+		var_Tipo_Componente TIPO.Tipo%TYPE;
+	BEGIN
+		-- Prelevo il tipo del tipo composto
+		SELECT T.Tipo INTO var_Tipo_Composto
+		FROM Tipo T 
+		WHERE T.ID_Tipo = :NEW.FK_Strutturato;
+		-- Prelevo il tipo del tipo componente
+		SELECT T.Tipo INTO var_Tipo_Componente
+		FROM Tipo T 
+		WHERE T.ID_Tipo = :NEW.FK_Tipo;
+		-- Verifico che il tipo composto sia "strutturato".
+		IF (var_Tipo_Composto <> 'strutturato') THEN 
+			RAISE_APPLICATION_ERROR(-20012, 'IS_VALID_COMP - violato.');
+		END IF;
+		-- Verifico che il tipo componente non sia "parametrico".
+		IF (var_Tipo_Componente = 'parametrico') THEN 
+			RAISE_APPLICATION_ERROR(-20012, 'IS_VALID_COMP - violato.');
+		END IF;
+	END;
+	/	
+	
+	
+	
+ /*____________________________________________________________________________________*/
+
+
+
+ /* Il seguente trigger verifica la validità del vincolo: SCOPE sulla tabella ATTRIBUTO.
+ */
+
+ CREATE OR REPLACE TRIGGER CNS_ATTRIBUTO
+	BEFORE INSERT OR UPDATE ON ATTRIBUTO
+	FOR EACH ROW
+	DECLARE
+		var_Tipo TIPO.Tipo%TYPE;
+		var_Scope TIPO.FK_Scope%TYPE;
+	BEGIN			
+		-- Prelevo il tipo e lo scope del tipo dell'attributo
+		SELECT T.Tipo, T.FK_Scope INTO var_Tipo, var_Scope
+		FROM TIPO T 
+		WHERE T.ID_Tipo = :NEW.FK_Tipo;
+			
+		-- Verifico se il tipo è "parametrico"
+		IF (var_Tipo = 'parametrico') THEN 
+			-- Nel caso lo fosse verifico che la classe di appartenenza dell'attributo
+			-- coincida con lo scope del tipo "parametrico"
+			IF (:NEW.FK_Classe <> var_Scope) THEN 
+				RAISE_APPLICATION_ERROR(-20013, 'SCOPE - violato'); 
+			END IF;		
+		END IF;
+	END;
+	/	
+
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ /* Il seguente trigger verifica la validità dei vincoli: SCOPE sulla tabella PARAMETRO,
+    ENUMERATION_TYPE e IS_VALID_TEMPLATE.
+ */
+ 
+ CREATE OR REPLACE TRIGGER CNS_PARAMETRO
+	BEFORE INSERT OR UPDATE ON PARAMETRO
+	FOR EACH ROW
+	DECLARE
+		var_Tipo TIPO.Tipo%TYPE;
+		var_Scope TIPO.FK_Scope%TYPE;
+		var_Tipo_Classe CLASSE.Tipo%TYPE;
+	BEGIN		
+		-- Se il parametro ha tipo controllo la validità del vincolo
+		IF (:NEW.FK_Tipo IS NOT NULL) THEN	
+			-- Prelevo il tipo e lo scope del tipo del tipo
+			SELECT T.Tipo, T.FK_Scope INTO var_Tipo, var_Scope
+			FROM TIPO T 
+			WHERE T.ID_Tipo = :NEW.FK_Tipo;
+			-- Solo attributo può impiegare il tipo enumerazione
+			IF (var_Tipo = 'enumerazione') THEN 
+				RAISE_APPLICATION_ERROR(-20014, 'ENUMERATION_TYPE - violato.');
+			END IF;
+			-- Verifico se il tipo è "parametrico"
+			IF (var_Tipo = 'parametrico') THEN 
+				-- Nel caso lo fosse verifico che la classe di appartenenza dell'attributo
+				-- coincida con lo scope del tipo "parametrico"
+				IF (:NEW.FK_Classe <> var_Scope) THEN 
+					RAISE_APPLICATION_ERROR(-20013, 'SCOPE - violato');
+				END IF;		
+			END IF;
+		END IF;	
+		-- Nel caso in cui l'operazione fosse di INSERT
+		IF INSERTING THEN
+			-- Se FK_Classe non è NULL allora verifico il vincolo IS_VALID_TEMPLATE
+			IF (:NEW.FK_Classe IS NOT NULL) THEN		
+				-- Prelevo il tipo della classe
+				SELECT C.Tipo INTO var_Tipo_Classe
+				FROM CLASSE C 
+				WHERE C.ID_Classe = :NEW.FK_Classe;
+				-- Verifico che la classe sia parametrica
+				IF (var_Tipo_Classe <> 'parametrica') THEN
+					RAISE_APPLICATION_ERROR(-20015, 'IS_VALID_TEMPLATE - violato.');
+				END IF;	
+			END IF;
+		-- Nel caso in cui l'operazione fosse di UPDATE
+		ELSIF UPDATING THEN
+			-- Basta verificare una tra FK_Classe e FK_Metodo dal momento che una delle 
+			-- due è sicuramente NULL
+			IF (:OLD.FK_Classe <> :NEW.FK_Classe) THEN
+				RAISE_APPLICATION_ERROR(-20002, 'IMMUTABLE_FK - violato.');
+			END IF;
+		END IF;
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/	
+	
+	
+	
+ /* Il seguente trigger verifica la validità dei vincoli: SCOPE sulla tabella METODO e 
+    ENUMERATION_TYPE.
+ */
+ 
+ CREATE OR REPLACE TRIGGER CNS_METODO
+	BEFORE INSERT OR UPDATE ON METODO
+	FOR EACH ROW
+	DECLARE
+		var_Tipo TIPO.Tipo%TYPE;
+		var_Scope TIPO.FK_Scope%TYPE;
+	BEGIN	
+		-- Se il metodo restituisce qualcosa allora verifico la validità del vincolo
+		IF (:NEW.FK_Tipo IS NOT NULL) THEN
+			-- Prelevo il tipo e lo scope del tipo del tipo
+			SELECT T.Tipo, T.FK_Scope INTO var_Tipo, var_Scope
+			FROM TIPO T 
+			WHERE T.ID_Tipo = :NEW.FK_Tipo;
+			-- Solo attributo può impiegare il tipo enumerazione
+			IF (var_Tipo = 'enumerazione') THEN 
+				RAISE_APPLICATION_ERROR(-20014, 'ENUMERATION_TYPE - violato.');
+			END IF;
+			
+			-- Verifico se il tipo è "parametrico"
+			IF (var_Tipo = 'parametrico') THEN 
+				-- Nel caso lo fosse verifico che la classe di appartenenza dell'attributo
+				-- coincida con lo scope del tipo "parametrico"
+				IF (:NEW.FK_Classe <> var_Scope) THEN 
+					RAISE_APPLICATION_ERROR(-20013, 'SCOPE - violato'); 
+				END IF;		
+			END IF;
+		END IF;
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/	
+
+
+
+ /* Il seguente trigger verifica la validità dei vincoli: IMMUTABLE_TYPE e IS_VALID_SCOPE.
+ */	
+	
+ -- IMMUTABLE_TYPE && IS_VALID_SCOPE
+ CREATE OR REPLACE TRIGGER CNS_TIPO
+	BEFORE INSERT OR UPDATE ON TIPO 
+	FOR EACH ROW
+	DECLARE
+		var_Tipo_Classe CLASSE.Tipo%TYPE;
+	BEGIN	
+		-- Nel caso in cui l'operazione fosse di INSERT
+		IF INSERTING THEN 
+			-- Se lo scope non è NULL (e il tipo è quindi parametrico) verifico la validità di IS_VALID_SCOPE
+			IF (:NEW.FK_Scope IS NOT NULL) THEN
+				-- Prelevo il tipo della classe
+				SELECT C.Tipo INTO var_Tipo_Classe
+				FROM CLASSE C 
+				WHERE C.ID_Classe = :NEW.FK_Scope;
+				-- Verifico che il tipo della classe sia "parametrica"
+				IF (var_Tipo_Classe <> 'parametrica') THEN
+					RAISE_APPLICATION_ERROR(-20016, 'IS_VALID_SCOPE - violato.');
+				END IF;	
+			END IF;
+		-- Nel caso in cui l'operazione fosse di UPDATE	
+		ELSIF UPDATING THEN		
+			-- Verifico IMMUTABLE_TYPE	
+			-- La sola verifica del tipo blocca ogni eventuale modifica 
+			-- sulle chiavi esterne FK_Parametro | FK_Classe | FK_Scope
+			-- dal momento che il tipo (del tipo) ha diversi legami con le chiavi esterne
+			-- e la modifica dello stesso comporterebbe una modifica delle FK.
+			-- Anche la sola modifica di una FK (e non del tipo) verrebbe bloccata dai vincoli
+			-- imposti nella definizione della tabella TIPO.
+			IF (:OLD.Tipo <> :NEW.Tipo) THEN
+				RAISE_APPLICATION_ERROR(-20001, 'IMMUTABLE_TYPE - violato.');
+			END IF;
+		END IF;
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/	
+ 
+ 
+ 
+ /* Il seguente trigger nega l'eliminazione di eventuali tipi parametrici/classe non indotte 
+    da eliminazioni di classi/parametri.
+ */	
+  
+ -- Vista utilizzata nel trigger IS_VALID_DELETE_TYPE
+ CREATE OR REPLACE VIEW VIEW_TIPO AS(
+	SELECT *
+	FROM TIPO T
+ );
+  
+ -- IS_VALID_DELETE_TYPE
+ CREATE OR REPLACE TRIGGER CNS_BFR_TIPO
+	INSTEAD OF DELETE ON VIEW_TIPO 
+	FOR EACH ROW
+	BEGIN	
+		-- Verifico se il tipo è classe oppure parametrico
+		IF :OLD.Tipo = 'classe' OR :OLD.Tipo = 'parametrico' THEN 
+			RAISE_APPLICATION_ERROR(-20018, 'IS_VALID_DELETE_TYPE - violato.');
+		END IF;
+		-- Elimino dalla tabella Tipo
+		DELETE FROM TIPO WHERE ID_TIPO = :OLD.ID_TIPO;
+	END;
+	/
+	
+ 
+ 
+ /*____________________________________________________________________________________*/
+	
+	
+	
+ /* Il seguente trigger verifica la validità dei vincoli: UNIQUE_ASSOC_NAME e IMMUTABLE_TYPE
+	nella modifica di un'istanza di ASSOCIAZIONE. 
+	Dal momento che tale trigger effettua operazioni di selezione nella stessa tabella interessata 
+	dal vincolo, proprio come in CNS_INSTEAD_ASSOCIAZIONE, il trigger opera sulla vista VIEW_ASSOCIAZIONE.
+	Ogni operazione di UPDATE su ASSOCIAZIONE deve quindi passare per VIEW_ASSOCIAZIONE.
+ */	
+ 
+  -- Vista utilizzata nel trigger CNS_BFR_ASSOCIAZIONE
+ CREATE OR REPLACE VIEW VIEW_ASSOCIAZIONE_UPD AS(
+	SELECT *
+	FROM ASSOCIAZIONE A 
+ );
+ 
+ CREATE OR REPLACE TRIGGER CNS_BFR_ASSOCIAZIONE
+	INSTEAD OF UPDATE ON VIEW_ASSOCIAZIONE_UPD
+	FOR EACH ROW 
+	DECLARE
+		counter INTEGER := 0;
+	BEGIN
+		-- Verifico se il Nome è mutato.
+		IF (:OLD.Nome <> :NEW.Nome) THEN 
+			-- Verifico se è presente un'associazione con Nome = :NEW.Nome
+			SELECT COUNT(*) INTO counter
+			FROM ASSOCIAZIONE A 
+			WHERE A.FK_ClassDiagram = :NEW.FK_ClassDiagram
+			AND A.Nome = :NEW.Nome;
+			-- Il nome è già esistente?
+			IF (counter <> 0) THEN 
+				RAISE_APPLICATION_ERROR(-20007, 'UNIQUE_ASSOC_NAME - violato.'); 
+			END IF;
+		
+		END IF;
+		-- Verifico se il vincolo IMMUTABLE_TYPE è verificato
+		IF (:OLD.Tipo <> :NEW.Tipo) THEN 
+			RAISE_APPLICATION_ERROR(-20001, 'IMMUTABLE_TYPE - violato.');
+		END IF;
+		-- Verifico che la chiave esterna non muti.
+		IF (:OLD.FK_ClassDiagram <> :NEW.FK_ClassDiagram) THEN
+			RAISE_APPLICATION_ERROR(-20002, 'IMMUTABLE_FK - La chiave esterna non può mutare.');
+		END IF;
+		-- Effettuo l'update in ASSOCIAZIONE
+		UPDATE ASSOCIAZIONE
+			SET Nome = :NEW.Nome,
+				Descrizione = :NEW.Descrizione
+			WHERE ID_Associazione = :OLD.ID_Associazione;
+	END;
+	/
+	
+	
+	
+ /*____________________________________________________________________________________*/
+	
+	
+	
+ /* Il seguente trigger verifica la validità dei vincoli: IMMUTABLE_TYPE e QUALIF_ASSOC. 
+	Dal momento che tale trigger effettua operazioni di selezione nella stessa tabella interessata 
+	dal vincolo, proprio come in CNS_INSTEAD_PARTECIPAZIONE, il trigger opera sulla vista VIEW_PARTECIPAZIONE.
+	Ogni operazione di UPDATE su PARTECIPAZIONE deve quindi passare per VIEW_PARTECIPAZIONE.
+ */
+ 
+ CREATE OR REPLACE TRIGGER CNS_BFR_PARTECIPAZIONE
+	INSTEAD OF UPDATE ON VIEW_PARTECIPAZIONE
+	FOR EACH ROW
+	DECLARE
+		grado INTEGER :=0;
+	BEGIN
+		-- Verifico se il tipo è mutato
+		IF (:OLD.Tipo <> :NEW.Tipo) THEN 
+			RAISE_APPLICATION_ERROR(-20001, 'IMMUTABLE_TYPE - violato.');
+		END IF;
+		-- Verifico se le chiavi esterne sono mutate
+		IF ((:OLD.FK_Associazione <> :NEW.FK_Associazione) OR
+			(:OLD.FK_Classe <> :NEW.FK_Classe)) THEN
+			RAISE_APPLICATION_ERROR(-20002, 'IMMUTABLE_FK - La chiave esterna non può mutare.');
+		END IF;
+		-- Verifico se la partecipazione può avere o meno qualificatore
+		IF (:NEW.qualificatore = 1 AND (:OLD.qualificatore <> :NEW.qualificatore)) THEN
+			-- Prelevo il grado dell'associazione della partecipazione interessata dall'UPDATE
+			grado := getGrado(:OLD.FK_Associazione);
+			-- Se il grado è maggiore di 2 allora la partecipazione non può avere qualificatore
+			IF (grado > 2) THEN 
+				RAISE_APPLICATION_ERROR(-20011, 'QUALIF_ASSOC - violato.');  
+			END IF;
+		END IF;
+		-- Effettuo l'update in PARTECIPAZIONE
+		UPDATE PARTECIPAZIONE
+			SET Ruolo = :NEW.Ruolo,
+				cardinalita_Inf = :NEW.cardinalita_Inf,
+				cardinalita_Sup = :NEW.cardinalita_Sup,
+				Navigabilita = :NEW.Navigabilita,
+				Qualificatore = :NEW.Qualificatore
+			WHERE ID_Partecipazione = :OLD.ID_Partecipazione;
+	END;
+	/
+
+
+
+ /*____________________________________________________________________________________*/
+	
+	
+	
+ /* Il seguente trigger verifica che la data di creazione/inserimento di un CD sia valida. 
+ */
+ 
+ CREATE OR REPLACE TRIGGER VALID_DATE
+	BEFORE INSERT OR UPDATE ON CLASSDIAGRAM
+	FOR EACH ROW
+	BEGIN
+		IF (TO_DATE(:New.C_Data, 'DD-MM-YYYY') > SYSDATE) THEN
+			RAISE_APPLICATION_ERROR(-20017, 'VALID_DATE - violato.');
+		END IF;
+	END;
+	/
+	
+
+
+ /*____________________________________________________________________________________*/
+
+
+
+ /* La seguente funzione, dato l'ID di un metodo, ne restituisce la sua firma.
+ */
+
+ CREATE OR REPLACE FUNCTION getMethodSignature(var_ID_Metodo METODO.ID_Metodo%TYPE)
+    RETURN VARCHAR2 IS
+        signature VARCHAR2(2000);
+        counter INTEGER;
+    BEGIN
+        -- Prelevo il nome del metodo
+        SELECT M.h_scope||' '||signature||M.Nome||'(' INTO signature
+        FROM METODO M
+        WHERE M.ID_Metodo = var_ID_Metodo;
+
+        -- Prelevo i parametri del metodo e i loro relativi tipi
+        FOR i IN (SELECT T.Nome||': '||P.Nome AS Param
+                  FROM PARAMETRO P JOIN TIPO T ON P.FK_Tipo = T.ID_Tipo
+                  WHERE P.FK_Metodo = var_ID_Metodo
+                  ORDER BY P.Posizione) 
+        LOOP
+            signature := signature||i.Param||', ';
+        END LOOP;
+        signature := RTRIM(signature, ', ')||')';
+		
+        -- Prelevo il tipo restituito
+        SELECT COUNT(*) INTO counter
+        FROM METODO M
+        WHERE M.ID_Metodo = var_ID_Metodo
+        AND M.FK_Tipo IS NOT NULL;
+
+        IF counter <> 0 THEN
+            SELECT signature||': '||T.Nome INTO signature
+            FROM TIPO T JOIN METODO M ON M.FK_Tipo = T.ID_Tipo
+            WHERE M.ID_Metodo = var_ID_Metodo;
+        END IF;
+
+        RETURN signature;
+    END;
+	/
+	
+
+
+ /*____________________________________________________________________________________*/
+ 
+
+CREATE FUNCTION sf_name (acoord_latitude VARCHAR(25), acoord_longitude VARCHAR(25), bcoord_latitude VARCHAR(25), bcoord_longitude VARCHAR(25))
+   RETURNS VARCHAR(25)
+   DETERMINISTIC
+   BEGIN
+      RETURN 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(CONVERT(acoord_latitude, SIGNED INTEGER))) * 
+             COS(RADIANS(CONVERT(bcoord_latitude, SIGNED INTEGER))) * COS(RADIANS(CONVERT(acoord_longitude, SIGNED INTEGER) - CONVERT(bcoord_longitude, SIGNED INTEGER))) + 
+             SIN(RADIANS(CONVERT(acoord_latitude, SIGNED INTEGER))) * SIN(RADIANS(CONVERT(bcoord_latitude, SIGNED INTEGER))))));
+   END
+
